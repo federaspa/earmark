@@ -1,0 +1,26 @@
+# Earmark configuration. Copy to config.toml (not in git) and edit.
+# Paths may use ~; relative paths are relative to this folder.
+
+[vault]
+# Your Obsidian vault. For experiments, point this at "test-vault" (make reset-test-vault).
+path = "~/Documents/Obsidian Vault"
+
+[recorder]
+audiorec = "bin/AudioRec.app/Contents/MacOS/audiorec"
+max_hours = 4
+# "teams" = only Teams audio (falls back to all audio if Teams isn't running); "all" = all system audio.
+capture = "teams"
+
+[transcriber]
+model = "mlx-community/whisper-large-v3-turbo"
+# "" = auto-detect per chunk of speech; or force one language, e.g. "it".
+language = ""
+# Languages to choose from when auto-detecting (per chunk of speech).
+languages = ["it", "en"]
+
+[filer]
+owner = "Alex"            # your name: the "Me" speaker in transcripts
+copilot_model = ""        # "" = Copilot default
+claude_model = ""         # "" = Claude Code default
+api_model = "claude-sonnet-5-5"
+timeout_min = 10

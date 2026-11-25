@@ -1,0 +1,17 @@
+.venv/
+.env
+inbox/
+processed/
+failed/
+logs/
+recordings/
+test-vault/
+bin/
+__pycache__/
+held/
+backups
+.DS_Store
+.pytest_cache/
+prompts/local.md
+tests/fixtures/local/
+config.toml

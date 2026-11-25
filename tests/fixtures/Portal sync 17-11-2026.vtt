@@ -1,0 +1,21 @@
+WEBVTT
+
+a1/1-0
+00:00:02.000 --> 00:00:06.500
+<v Mario Bianchi>Ok, let's start. Today we agree on the dashboard fixes before the client demo.</v>
+
+a1/2-0
+00:00:07.000 --> 00:00:14.000
+<v Alex Moretti>Sure. There are two open items: the totals on the second tab and the date filter.</v>
+
+a1/3-0
+00:00:15.000 --> 00:00:21.000
+<v Anna Verdi>I think both come from the same bug in the date filter. I'll fix it by Thursday.</v>
+
+a1/4-0
+00:00:22.000 --> 00:00:26.000
+<v Mario Bianchi>Great. Alex, can you prepare the demo script?</v>
+
+a1/5-0
+00:00:27.000 --> 00:00:29.000
+<v Alex Moretti>Yes, by Friday.</v>

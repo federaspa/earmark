@@ -8,6 +8,7 @@ separate Python process so the Whisper model's memory is released when it finish
 import json
 import logging
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -57,15 +58,18 @@ class MeetingApp(rumps.App):
         self.voice_note = False
         self.busy = 0  # transcriptions running
         self.quitting = False
+        self.discarded: set[Path] = set()  # recordings to delete instead of transcribing
 
         self.start_item = rumps.MenuItem("Start recording", callback=self.start)
         self.voice_item = rumps.MenuItem("Start voice note", callback=self.start_voice_note)
         self.stop_item = rumps.MenuItem("Stop recording", callback=None)
         self.recover_item = rumps.MenuItem("Recover last recording", callback=None)
+        # Kept away from Stop, in its own section, so it isn't clicked by mistake.
+        self.discard_item = rumps.MenuItem("Discard recording…", callback=None)
         self.menu = [self.start_item, self.voice_item, self.stop_item, None, self.recover_item, None,
                      rumps.MenuItem("Open inbox", callback=lambda _: subprocess.run(["open", config.INBOX])),
                      rumps.MenuItem("Open logs", callback=lambda _: subprocess.run(["open", config.LOGS])),
-                     None, rumps.MenuItem("Quit", callback=self.quit)]
+                     None, self.discard_item, None, rumps.MenuItem("Quit", callback=self.quit)]
         self.timer = rumps.Timer(self.tick, 1)
         self.timer.start()
         threading.Thread(target=self.check_permissions, daemon=True).start()
@@ -90,6 +94,7 @@ class MeetingApp(rumps.App):
         self.start_item.set_callback(None if recording else self.start)
         self.voice_item.set_callback(None if recording else self.start_voice_note)
         self.stop_item.set_callback(self.stop if recording else None)
+        self.discard_item.set_callback(self.discard if recording else None)
         recoverable = not recording and not self.busy and bool(unfinished_recordings())
         self.recover_item.set_callback(self.recover if recoverable else None)
 
@@ -137,7 +142,12 @@ class MeetingApp(rumps.App):
         if self.proc is proc:
             self.state = IDLE
             self.proc = None
-        if any(folder.glob("*.wav")) and not self.quitting:
+        if folder in self.discarded:
+            self.discarded.discard(folder)
+            shutil.rmtree(folder, ignore_errors=True)
+            log.info("discarded %s", folder.name)
+            notify("Meeting recorder", "Recording discarded.")
+        elif any(folder.glob("*.wav")) and not self.quitting:
             self.transcribe(folder)
 
     def log_stderr(self, proc: subprocess.Popen):
@@ -165,6 +175,19 @@ class MeetingApp(rumps.App):
             log.info("stopping recording")
             proc.send_signal(signal.SIGINT)  # audiorec finalizes the WAV files
         # read_events() notices the exit and starts the transcription.
+
+    def discard(self, _):
+        """Stop the current recording and delete its audio, after a confirmation."""
+        proc, folder = self.proc, self.folder
+        if not (proc and proc.poll() is None and folder):
+            return
+        if rumps.alert("Discard this recording?", "The audio is deleted and nothing is transcribed.",
+                       ok="Discard", cancel="Keep recording") != 1:
+            return
+        log.info("discarding recording")
+        self.discarded.add(folder)
+        proc.send_signal(signal.SIGINT)
+        # read_events() notices the exit and deletes the folder.
 
     # ------------------------------------------------------------- transcription
 
